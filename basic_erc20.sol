@@ -73,7 +73,13 @@ contract XYZToken is Token {
         // TODO: Implement the transfer logic.
         // Ensure the sender has enough tokens, the recipient’s balance doesn’t overflow,
         // and emit the Transfer event after a successful transfer.
+        require(balances[msg.sender] >= _value, "Insufficient balance");
+        require(balances[_to] + _value >= balances[_to], "Overflow error");
 
+        balances[msg.sender] -= _value;
+        balances[_to] += _value;
+        
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -82,27 +88,38 @@ contract XYZToken is Token {
         // TODO: Implement the transferFrom logic.
         // Check that the sender has enough tokens, the allowance is sufficient,
         // the recipient’s balance doesn’t overflow, and emit the Transfer event.
+        require(balances[_from] >= _value, "Insufficient balance");
+        require(allowed[_from][msg.sender] >= _value, "Allowance exceeded");
+        require(balances[_to] + _value >= balances[_to], "Overflow error");
 
+        balances[_from] -= _value;
+        balances[_to] += _value;
+        allowed[_from][msg.sender] -= _value;
         
+        emit Transfer(_from, _to, _value);
         return true;
     }
 
     // View function to get the balance of an address
     function balanceOf(address _owner) external view override returns (uint256 balance) {
         // TODO: Return the balance of the specified address from the balances mapping.
+        return balances[_owner];
     }
 
     // Approve another address to spend tokens on behalf of the sender
     function approve(address _spender, uint256 _value) external override returns (bool success) {
         // TODO: Set the spender's allowance in the allowed mapping.
         // Emit the Approval event to notify that the spender has been approved to spend the specified amount.
+        allowed[msg.sender][_spender] = _value;
         
+        emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
     // Check the allowance an address has to spend tokens on behalf of another address
     function allowance(address _owner, address _spender) external view override returns (uint256 remaining) {
         // TODO: Return the allowance set by the owner for the spender in the allowed mapping.
+        return allowed[_owner][_spender];
     }
 
     // Fallback function to handle ETH transfers and issue XYZ tokens
@@ -120,5 +137,6 @@ contract XYZToken is Token {
 
         // Transfer the received Ether to the funds wallet
         payable(fundsWallet).transfer(msg.value);
+
     }
 }
